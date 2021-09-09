@@ -21,3 +21,15 @@ In command prompt, or git bash, or whatever mac users use; follow these steps:
 - next you can type `git pull upstream master` and that will pull what is in the remote repo down to local
 - next create your own branch - this is where you will make your own changes to the code so that we don't conflict with one another's work  
   - type `git checkout -b my_name upstream/master`  
+
+3.) When you make changes to your local branch, and you want them to be reflected in remote, type the following:
+- `git add .`
+- `git commit -m "commit message explaining changes"`
+- `git push upstream my_name`
+- this is move what's on your local up to your own branch in remote
+
+4.) If the changes in your personal branch are ready to be merged into the master branch, read [this article](https://docs.github.com/en/github/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-a-pull-request) about creating and merging pull requests.
+
+Never push directly to master from your local git instance.
+
+Please reach out if you have any questions.
