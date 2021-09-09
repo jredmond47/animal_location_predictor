@@ -20,4 +20,4 @@ In command prompt, or git bash, or whatever mac users use; follow these steps:
       - pulling (for pulling new changes down from github)
 - next you can type `git pull upstream master` and that will pull what is in the remote repo down to local
 - next create your own branch - this is where you will make your own changes to the code so that we don't conflict with one another's work  
-  - type 'git checkout -b my_name upstream/master`  
+  - type `git checkout -b my_name upstream/master`  
