@@ -1,5 +1,4 @@
 # Author: Philipp Meschenmoser, DBVIS, Uni Konstanz
-# Edits: John Redmond
 # Python wrapper with functions using Movebank's REST API to view available studies, read data and accept license terms programmatically
 # Acknowledgements to Anne K. Scharf and her great moveACC package, see https://gitlab.com/anneks/moveACC
 
