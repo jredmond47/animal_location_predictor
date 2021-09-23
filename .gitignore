@@ -4,6 +4,12 @@
 # Data
 data/
 
+# ML data
+api/data
+
+# literature review
+literature_review/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

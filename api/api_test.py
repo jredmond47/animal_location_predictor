@@ -50,7 +50,7 @@ if __name__ == '__main__':
 
     # make directory for files if none exists
     if not os.path.exists(out_path):
-        os.mkdir(out_path)
+        os.makedirs(out_path)
 
     mbapi = movebankAPI()
 
