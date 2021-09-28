@@ -6,6 +6,7 @@ import time
 import numpy as np
 import requests
 import os
+import ssl
 import hashlib
 import csv
 import json
@@ -24,7 +25,9 @@ class movebankAPI():
         # Returns the API response as plain text.
         # time.sleep(np.random.uniform(0,5))
 
-        response = requests.get('https://www.movebank.org/movebank/service/direct-read', params=params, auth=(os.environ['mbus'], os.environ['mbpw']))
+        response = requests.get('https://www.movebank.org/movebank/service/direct-read'
+                                , params=params
+                                , auth=(os.environ['mbus'], os.environ['mbpw']))
         # print("Request " + response.url)
         if response.status_code == 200:  # successful request
             if 'License Terms:' in str(response.content):

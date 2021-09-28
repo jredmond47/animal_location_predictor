@@ -7,38 +7,38 @@ from multiprocessing import Pool
 
 class getMoveBankData():
 
-    def write_to_csv(self, data: list, out_file_name: str):
+    def write_to_csv(self, data: list, out_file_name: str, out_path: str):
         '''
         write data to csv - create new file if none exists, append if it does
         :param data:
         :param out_file_name:
         :return:
         '''
-        out_path = os.path.join('data', 'api_test', out_file_name)
+        destination = os.path.join(out_path, out_file_name)
         if len(data) > 0:
-            file_exists = os.path.isfile(out_path)
+            file_exists = os.path.isfile(destination)
             column_names = list(data[0].keys())
             if file_exists:
-                with open(out_path, 'a', encoding="utf-8", newline='') as csv_file:
+                with open(destination, 'a', encoding="utf-8", newline='') as csv_file:
                     writer = csv.DictWriter(csv_file, fieldnames=column_names)
                     writer.writerows(data)
             else:
-                with open(out_path, 'w', encoding="utf-8", newline='') as csv_file:
+                with open(destination, 'w', encoding="utf-8", newline='') as csv_file:
                     writer = csv.DictWriter(csv_file, fieldnames=column_names)
                     writer.writeheader()
                     writer.writerows(data)
         else:
             print(f'''No data pertaining to {out_file_name.replace('.csv', '')}''')
 
-    def write_to_txt(self, data: str, out_file_name):
+    def write_to_txt(self, data: str, out_file_name, out_path):
         '''
 
         :param data:
         :param out_file_name:
         :return:
         '''
-        out_path = os.path.join('data', 'api_test', out_file_name)
-        with open(out_path, 'w', encoding="utf-8") as txt_file:
+        destination = os.path.join(out_path, out_file_name)
+        with open(destination, 'w', encoding="utf-8") as txt_file:
             txt_file.write(data)
 
     def mulitprocess_api_call(self, func, values):
@@ -70,7 +70,7 @@ if __name__ == '__main__':
 
     # make directory for files if none exists
     if not os.path.exists(out_path):
-        os.mkdir(out_path)
+        os.makedirs(out_path)
 
     mbapi = movebankAPI()
     gmbd = getMoveBankData()
@@ -81,19 +81,19 @@ if __name__ == '__main__':
     file_name = 'data_attributes.txt'
     print(f'\t{file_name}')
     data_attributes = mbapi.callMovebankAPI(('attributes'))
-    gmbd.write_to_txt(data_attributes, file_name)
+    gmbd.write_to_txt(data_attributes, file_name, out_path)
 
     # SENSOR DATA
     file_name = 'sensors.csv'
     print(f'\t{file_name}')
     sensor_info = mbapi.getSensors()
-    gmbd.write_to_csv(sensor_info, file_name)
+    gmbd.write_to_csv(sensor_info, file_name, out_path)
 
     # ALL STUDIES
     file_name = 'studies.csv'
     print(f'\t{file_name}')
     allstudies = mbapi.getStudies()
-    gmbd.write_to_csv(allstudies, file_name)
+    gmbd.write_to_csv(allstudies, file_name, out_path)
 
     # DEPLOYMENTS
     file_name = 'deployments.csv'
@@ -102,13 +102,13 @@ if __name__ == '__main__':
     deployments = [response for response in deployments_temp if response]
     empty_count = len(deployments_temp) - len(deployments)
     print(f'\t\tgot {len(deployments)} deployments - {empty_count} were empty')
-    [gmbd.write_to_csv(deployment, file_name) for deployment in deployments]
+    [gmbd.write_to_csv(deployment, file_name, out_path) for deployment in deployments]
 
     # GPS STUDIES
     file_name = 'gps_studies.csv'
     print(f'\t{file_name}')
     gps_studies = mbapi.getStudiesBySensor(allstudies, 'GPS')
-    gmbd.write_to_csv(gps_studies, file_name)
+    gmbd.write_to_csv(gps_studies, file_name, out_path)
 
     # INDIVIDUALS
     file_name = 'gps_individuals.csv'
@@ -117,7 +117,7 @@ if __name__ == '__main__':
     gps_individuals = [response for response in gps_individuals_temp if response]
     empty_count = len(gps_individuals_temp) - len(gps_individuals)
     print(f'\t\tgot {len(gps_individuals)} gps_individuals - {empty_count} were empty')
-    [gmbd.write_to_csv(individual, file_name) for individual in gps_individuals]
+    [gmbd.write_to_csv(individual, file_name, out_path) for individual in gps_individuals]
 
     # EVENTS
     file_name = 'gps_events.csv'
@@ -127,8 +127,8 @@ if __name__ == '__main__':
     for individual in gps_individuals:
         temp = [(i['study_id'], i['individual_id'], gps_sensor_id) for i in individual]
         ids.extend(temp)
-    gps_events_temp = gmbd.mulitprocess_api_call(func=mbapi.getIndividualEvents, values=ids[:10])
+    gps_events_temp = gmbd.mulitprocess_api_call(func=mbapi.getIndividualEvents, values=ids[:100])
     gps_events = [response for response in gps_events_temp if response]
     empty_count = len(gps_events_temp) - len(gps_events)
     print(f'\t\tgot {len(gps_events)} gps_events - {empty_count} were empty')
-    [gmbd.write_to_csv(event, file_name) for event in gps_events]
+    [gmbd.write_to_csv(event, file_name, out_path) for event in gps_events]
