@@ -1,32 +1,55 @@
 import csv, os, datetime
 from argparse import ArgumentParser
-from functools import partial
+import tqdm
 from api_util import movebankAPI
 from multiprocessing import Pool
 
 
-def write_to_csv(data:list, out_file_name:str):
-    '''
-    write data to csv - create new file if none exists, append if it does
-    :param data:
-    :param out_file_name:
-    :return:
-    '''
-    out_path = os.path.join('data', 'api_test', out_file_name)
-    if len(data) > 0:
-        fieldnames = list(data[0].keys())
-        file_exists = os.path.isfile(out_path)
-        if file_exists:
-            with open(out_path, 'a', encoding="utf-8", newline='') as csv_file:
-                writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
-                writer.writerows(data)
+class getMoveBankData():
+
+    def write_to_csv(self, data: list, out_file_name: str):
+        '''
+        write data to csv - create new file if none exists, append if it does
+        :param data:
+        :param out_file_name:
+        :return:
+        '''
+        out_path = os.path.join('data', 'api_test', out_file_name)
+        if len(data) > 0:
+            file_exists = os.path.isfile(out_path)
+            column_names = list(data[0].keys())
+            if file_exists:
+                with open(out_path, 'a', encoding="utf-8", newline='') as csv_file:
+                    writer = csv.DictWriter(csv_file, fieldnames=column_names)
+                    writer.writerows(data)
+            else:
+                with open(out_path, 'w', encoding="utf-8", newline='') as csv_file:
+                    writer = csv.DictWriter(csv_file, fieldnames=column_names)
+                    writer.writeheader()
+                    writer.writerows(data)
         else:
-            with open(out_path, 'w', encoding="utf-8", newline='') as csv_file:
-                writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
-                writer.writeheader()
-                writer.writerows(data)
-    else:
-        print(f'''No data pertaining to {out_file_name.replace('.csv','')}''')
+            print(f'''No data pertaining to {out_file_name.replace('.csv', '')}''')
+
+    def write_to_txt(self, data: str, out_file_name):
+        '''
+
+        :param data:
+        :param out_file_name:
+        :return:
+        '''
+        out_path = os.path.join('data', 'api_test', out_file_name)
+        with open(out_path, 'w', encoding="utf-8") as txt_file:
+            txt_file.write(data)
+
+    def mulitprocess_api_call(self, func, values):
+        pool = Pool(3)
+
+        responses = []
+        print('\t\t', end='')
+        for response in tqdm.tqdm(pool.imap_unordered(func, values), total=len(values)):
+            responses.append(response)
+
+        return responses
 
 
 # always execute scripts using __name__ == '__main__'
@@ -34,48 +57,78 @@ if __name__ == '__main__':
 
     # parse arguments from run profile
     parser = ArgumentParser()
-    parser.add_argument('--study-id',default=7006760) # study id for Costa Lab Northern Elephant Seals
-    parser.add_argument('--individual-id',default=-1)
-    parser.add_argument('--sensor-type-id',default=-1)
-    parser.add_argument('--delete-files',default=True)
+    parser.add_argument('--delete-files', default=True)
     args = parser.parse_args()
 
     # set out path
-    out_path = os.path.join('data','api_test')
+    out_path = os.path.join('data', 'move_bank')
 
     # delete existing files if appropriate
     if args.delete_files and os.path.exists(out_path):
         for file in os.listdir(out_path):
-            os.remove(os.path.join(out_path,file))
+            os.remove(os.path.join(out_path, file))
 
     # make directory for files if none exists
     if not os.path.exists(out_path):
         os.mkdir(out_path)
 
     mbapi = movebankAPI()
+    gmbd = getMoveBankData()
 
+    print('Pulling...')
+
+    # DATA ATTRIBUTES
+    file_name = 'data_attributes.txt'
+    print(f'\t{file_name}')
+    data_attributes = mbapi.callMovebankAPI(('attributes'))
+    gmbd.write_to_txt(data_attributes, file_name)
+
+    # SENSOR DATA
+    file_name = 'sensors.csv'
+    print(f'\t{file_name}')
+    sensor_info = mbapi.getSensors()
+    gmbd.write_to_csv(sensor_info, file_name)
+
+    # ALL STUDIES
+    file_name = 'studies.csv'
+    print(f'\t{file_name}')
     allstudies = mbapi.getStudies()
-    write_to_csv(allstudies, 'studies.csv')
+    gmbd.write_to_csv(allstudies, file_name)
 
-    gpsstudies = mbapi.getStudiesBySensor(allstudies, 'GPS')
-    write_to_csv(gpsstudies, 'gps_studies.csv')
+    # DEPLOYMENTS
+    file_name = 'deployments.csv'
+    print(f'\t{file_name}')
+    deployments_temp = gmbd.mulitprocess_api_call(func=mbapi.getDeploymentsByStudy, values=[s['id'] for s in allstudies[:100]])
+    deployments = [response for response in deployments_temp if response]
+    empty_count = len(deployments_temp) - len(deployments)
+    print(f'\t\tgot {len(deployments)} deployments - {empty_count} were empty')
+    [gmbd.write_to_csv(deployment, file_name) for deployment in deployments]
 
-    # parallelize the data pull for the individuals
-    pool = Pool(16)
-    gps_study_ids = [s['id'] for s in gpsstudies]
-    s = datetime.datetime.now()
-    individuals = pool.map(mbapi.getIndividualsByStudy, gps_study_ids)
-    print(f'Elapsed Time for getting individuals: {datetime.datetime.now() - s}')
-    wtc_partial = partial(write_to_csv, out_file_name='gps_study_individuals.csv')
-    pool.map(wtc_partial, individuals)
+    # GPS STUDIES
+    file_name = 'gps_studies.csv'
+    print(f'\t{file_name}')
+    gps_studies = mbapi.getStudiesBySensor(allstudies, 'GPS')
+    gmbd.write_to_csv(gps_studies, file_name)
 
-    # gpsevents = mbapi.getIndividualEvents(study_id=9493874, individual_id=11522613,
-    #                                       sensor_type_id=653)  # GPS events
-    # if len(gpsevents) > 0:
-    #     mbapi.prettyPrint(mbapi.transformRawGPS(gpsevents))
-    #
-    # # Print tri-axial acceleration in m/s^2: [(ts, deployment, accx, accy, accz), [ts,...],...]
-    # accevents = mbapi.getIndividualEvents(study_id=9493874, individual_id=11522613,
-    #                                       sensor_type_id=2365683)  # ACC events
-    # if len(accevents) > 0:
-    #     mbapi.prettyPrint(mbapi.transformRawACC(accevents))
+    # INDIVIDUALS
+    file_name = 'gps_individuals.csv'
+    print(f'\t{file_name}')
+    gps_individuals_temp = gmbd.mulitprocess_api_call(func=mbapi.getIndividualsByStudy, values=[s['id'] for s in gps_studies[:100]])
+    gps_individuals = [response for response in gps_individuals_temp if response]
+    empty_count = len(gps_individuals_temp) - len(gps_individuals)
+    print(f'\t\tgot {len(gps_individuals)} gps_individuals - {empty_count} were empty')
+    [gmbd.write_to_csv(individual, file_name) for individual in gps_individuals]
+
+    # EVENTS
+    file_name = 'gps_events.csv'
+    print(f'\t{file_name}')
+    gps_sensor_id = 653
+    ids = []
+    for individual in gps_individuals:
+        temp = [(i['study_id'], i['individual_id'], gps_sensor_id) for i in individual]
+        ids.extend(temp)
+    gps_events_temp = gmbd.mulitprocess_api_call(func=mbapi.getIndividualEvents, values=ids[:10])
+    gps_events = [response for response in gps_events_temp if response]
+    empty_count = len(gps_events_temp) - len(gps_events)
+    print(f'\t\tgot {len(gps_events)} gps_events - {empty_count} were empty')
+    [gmbd.write_to_csv(event, file_name) for event in gps_events]

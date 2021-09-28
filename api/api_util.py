@@ -2,6 +2,8 @@
 # Python wrapper with functions using Movebank's REST API to view available studies, read data and accept license terms programmatically
 # Acknowledgements to Anne K. Scharf and her great moveACC package, see https://gitlab.com/anneks/moveACC
 
+import time
+import numpy as np
 import requests
 import os
 import hashlib
@@ -20,29 +22,35 @@ class movebankAPI():
         # Requests Movebank API with ((param1, value1), (param2, value2),).
         # Assumes the environment variables 'mbus' (Movebank user name) and 'mbpw' (Movebank password).
         # Returns the API response as plain text.
+        # time.sleep(np.random.uniform(0,5))
 
-        response = requests.get('https://www.movebank.org/movebank/service/direct-read?'
-                                , params=params
-                                , auth=(os.environ['mbus'], os.environ['mbpw']))
-        print("Request " + response.url)
+        response = requests.get('https://www.movebank.org/movebank/service/direct-read', params=params, auth=(os.environ['mbus'], os.environ['mbpw']))
+        # print("Request " + response.url)
         if response.status_code == 200:  # successful request
             if 'License Terms:' in str(response.content):
                 # only the license terms are returned, hash and append them in a subsequent request.
                 # See also
                 # https://github.com/movebank/movebank-api-doc/blob/master/movebank-api.md#read-and-accept-license-terms-using-curl
-                print("Has license terms")
+                # print("Has license terms")
                 hash = hashlib.md5(response.content).hexdigest()
                 params = params + (('license-md5', hash),)
                 # also attach previous cookie:
                 response = requests.get('https://www.movebank.org/movebank/service/direct-read', params=params,
                                         cookies=response.cookies, auth=(os.environ['mbus'], os.environ['mbpw']))
                 if response.status_code == 403:  # incorrect hash
-                    print("Incorrect hash")
+                    # print("Incorrect hash")
                     return ''
             return response.content.decode('utf-8')
-        print(str(response.content))
+        # print(str(response.content))
         return ''
 
+    def getSensors(self):
+        sensors = self.callMovebankAPI((('entity_type', 'tag_type'),))
+        if len(sensors) > 0:
+            # parse raw text to dicts
+            sensors = list(csv.DictReader(io.StringIO(sensors), delimiter=','))
+            return sensors
+        return []
 
     def getStudies(self):
         studies = self.callMovebankAPI((('entity_type', 'study'), ('i_can_see_data', 'true'), ('there_are_data_which_i_cannot_see', 'false')))
@@ -57,21 +65,38 @@ class movebankAPI():
         return [s for s in studies if sensorname in s['sensor_type_ids']]
 
 
-    def getIndividualsByStudy(self, study_id):
-        individuals = self.callMovebankAPI((('entity_type', 'individual'), ('study_id', study_id)))
-        if len(individuals) > 0:
-            return list(csv.DictReader(io.StringIO(individuals), delimiter=','))
+    def getDeploymentsByStudy(self, study_id):
+        deployments = self.callMovebankAPI((('entity_type', 'deployment'), ('study_id', study_id)))
+        if len(deployments) > 0:
+            return list(csv.DictReader(io.StringIO(deployments), delimiter=','))
         return []
 
 
-    def getIndividualEvents(self, study_id, individual_id, sensor_type_id=653):
-        # See below table for sensor_type_id's.
+    def getIndividualsByStudy(self, study_id):
+        individuals = self.callMovebankAPI((('entity_type', 'individual'), ('study_id', study_id)))
+        if len(individuals) > 0:
+            response_temp = list(csv.DictReader(io.StringIO(individuals), delimiter=','))
+            response_final = []
+            for r in response_temp:
+                r.update({'study_id': study_id, 'individual_id': r['id']})
+                response_final.append(r)
+            return response_final
+        return []
 
+
+    def getIndividualEvents(self, ids):
+        # See below table for sensor_type_id's.
+        study_id, individual_id, sensor_type_id = ids
         params = (('entity_type', 'event'), ('study_id', study_id), ('individual_id', individual_id),
                   ('sensor_type_id', sensor_type_id), ('attributes', 'all'))
         events = self.callMovebankAPI(params)
         if len(events) > 0:
-            return list(csv.DictReader(io.StringIO(events), delimiter=','))
+            response_temp = list(csv.DictReader(io.StringIO(events), delimiter=','))
+            response_final = []
+            for r in response_temp:
+                r.update({'study_id': study_id, 'individual_id': individual_id, 'sensor_type_id': sensor_type_id})
+                response_final.append(r)
+            return response_final
         return []
 
 
