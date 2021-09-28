@@ -98,7 +98,7 @@ if __name__ == '__main__':
     # DEPLOYMENTS
     file_name = 'deployments.csv'
     print(f'\t{file_name}')
-    deployments_temp = gmbd.mulitprocess_api_call(func=mbapi.getDeploymentsByStudy, values=[s['id'] for s in allstudies[:100]])
+    deployments_temp = gmbd.mulitprocess_api_call(func=mbapi.getDeploymentsByStudy, values=[s['id'] for s in allstudies])
     deployments = [response for response in deployments_temp if response]
     empty_count = len(deployments_temp) - len(deployments)
     print(f'\t\tgot {len(deployments)} deployments - {empty_count} were empty')
@@ -113,7 +113,7 @@ if __name__ == '__main__':
     # INDIVIDUALS
     file_name = 'gps_individuals.csv'
     print(f'\t{file_name}')
-    gps_individuals_temp = gmbd.mulitprocess_api_call(func=mbapi.getIndividualsByStudy, values=[s['id'] for s in gps_studies[:100]])
+    gps_individuals_temp = gmbd.mulitprocess_api_call(func=mbapi.getIndividualsByStudy, values=[s['id'] for s in gps_studies])
     gps_individuals = [response for response in gps_individuals_temp if response]
     empty_count = len(gps_individuals_temp) - len(gps_individuals)
     print(f'\t\tgot {len(gps_individuals)} gps_individuals - {empty_count} were empty')
@@ -127,7 +127,7 @@ if __name__ == '__main__':
     for individual in gps_individuals:
         temp = [(i['study_id'], i['individual_id'], gps_sensor_id) for i in individual]
         ids.extend(temp)
-    gps_events_temp = gmbd.mulitprocess_api_call(func=mbapi.getIndividualEvents, values=ids[:100])
+    gps_events_temp = gmbd.mulitprocess_api_call(func=mbapi.getIndividualEvents, values=ids)
     gps_events = [response for response in gps_events_temp if response]
     empty_count = len(gps_events_temp) - len(gps_events)
     print(f'\t\tgot {len(gps_events)} gps_events - {empty_count} were empty')
