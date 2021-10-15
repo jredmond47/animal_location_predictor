@@ -28,6 +28,7 @@ class movebankAPI():
         response = requests.get('https://www.movebank.org/movebank/service/direct-read'
                                 , params=params
                                 , auth=(os.environ['mbus'], os.environ['mbpw']))
+
         # print("Request " + response.url)
         if response.status_code == 200:  # successful request
             if 'License Terms:' in str(response.content):
@@ -70,21 +71,26 @@ class movebankAPI():
 
     def getDeploymentsByStudy(self, study_id):
         deployments = self.callMovebankAPI((('entity_type', 'deployment'), ('study_id', study_id)))
-        if len(deployments) > 0:
-            return list(csv.DictReader(io.StringIO(deployments), delimiter=','))
-        return []
+        response_temp = list(csv.DictReader(io.StringIO(deployments), delimiter=','))
+        if len(response_temp) > 0:
+            response_final = []
+            for r in response_temp:
+                r.update({'study_id': study_id, '__is_empty__':False})
+                response_final.append(r)
+            return response_final
+        return [{'study_id':study_id, '__is_empty__':True}]
 
 
     def getIndividualsByStudy(self, study_id):
         individuals = self.callMovebankAPI((('entity_type', 'individual'), ('study_id', study_id)))
-        if len(individuals) > 0:
-            response_temp = list(csv.DictReader(io.StringIO(individuals), delimiter=','))
+        response_temp = list(csv.DictReader(io.StringIO(individuals), delimiter=','))
+        if len(response_temp) > 0:
             response_final = []
             for r in response_temp:
-                r.update({'study_id': study_id, 'individual_id': r['id']})
+                r.update({'study_id': study_id, 'individual_id': r['id'], '__is_empty__':False})
                 response_final.append(r)
             return response_final
-        return []
+        return [{'study_id':study_id, '__is_empty__':True}]
 
 
     def getIndividualEvents(self, ids):
@@ -93,14 +99,14 @@ class movebankAPI():
         params = (('entity_type', 'event'), ('study_id', study_id), ('individual_id', individual_id),
                   ('sensor_type_id', sensor_type_id), ('attributes', 'all'))
         events = self.callMovebankAPI(params)
+        response_temp = list(csv.DictReader(io.StringIO(events), delimiter=','))
         if len(events) > 0:
-            response_temp = list(csv.DictReader(io.StringIO(events), delimiter=','))
             response_final = []
             for r in response_temp:
-                r.update({'study_id': study_id, 'individual_id': individual_id, 'sensor_type_id': sensor_type_id})
+                r.update({'study_id': study_id, 'individual_id': individual_id, 'sensor_type_id': sensor_type_id, '__is_empty__':False})
                 response_final.append(r)
             return response_final
-        return []
+        return [{'study_id':study_id, 'individual_id':individual_id, 'sensor_type_id':sensor_type_id, '__is_empty__':True}]
 
 
     def transformRawGPS(self, gpsevents):
