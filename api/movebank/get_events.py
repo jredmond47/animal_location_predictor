@@ -30,8 +30,8 @@ if __name__ == '__main__':
 
     temp = joined_data.sort_values('number_of_events', ascending=False).loc[0,['study_id', 'individual_id']]
 
-    study_id = temp.study_id if not args.study_id else args.study_id
-    individual_id = temp.individual_id if not args.individual_id else args.individual_id
+    study_id = 8019591 if not args.study_id else args.study_id
+    individual_id = 54137415 if not args.individual_id else args.individual_id
     sensor_id = 653 if not args.sensor_id else args.sensor_id
 
     # EVENTS
