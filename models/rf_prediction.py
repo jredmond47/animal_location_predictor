@@ -66,20 +66,26 @@ if __name__ == '__main__':
         clf.fit(X_train, y_train)
         y_pred = clf.predict(X_test)
 
-        # confusion_matrix = pd.crosstab(y_test, y_pred, rownames=['Actual'], colnames=['Predicted'])
-        # sn.heatmap(confusion_matrix, annot=True)
-
         print(f'--- finished {pred_var}')
 
-        r2 = metrics.r2_score(y_test, y_pred)
+        actual = y_test
+        predicted = y_pred
+
+        r2 = metrics.r2_score(actual, predicted)
+        N = actual.shape[0]
+        p = 3
+        x = (1 - r2)
+        y = (N - 1) / (N - p - 1)
+        adj_r2 = (1 - (x * y))
         mape = metrics.mean_absolute_percentage_error(y_test, y_pred)
 
         predictions[pred_var] = {
-            'metrics': {
+            'seed': seed
+            , 'metrics': {
                 'r2': r2
+                , 'adj_r2': adj_r2
                 , 'mape': mape
             }
-            , 'seed': seed
         }
 
     pred_json = json.dumps(predictions)
