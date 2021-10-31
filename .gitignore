@@ -1,6 +1,9 @@
 # Pycharm
 .idea/
 
+# SSL Certs
+*.cer
+
 # Data
 data/
 
