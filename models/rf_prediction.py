@@ -45,7 +45,7 @@ if __name__ == '__main__':
 
     usable_columns = ['location_lat', 'location_long', 'ground_speed', 'heading', 'week', 'weekday', 'eobs_temperature', 'eobs_speed_accuracy_estimate']
 
-    model_data = data[usable_columns].dropna()
+    model_data = data[usable_columns].dropna().drop_duplicates()
 
     X = model_data[['ground_speed', 'heading', 'week', 'weekday', 'eobs_temperature', 'eobs_speed_accuracy_estimate']]
 
