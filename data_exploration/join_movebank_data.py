@@ -2,6 +2,8 @@ import numpy as np
 import pandas as pd
 import os
 
+os.chdir('c:\\Users\\gilma\\animal_tracking\\api')
+
 data_path = os.path.join('data', 'movebank')
 
 studies = pd.read_csv(os.path.join(data_path, 'gps_studies.csv'))
