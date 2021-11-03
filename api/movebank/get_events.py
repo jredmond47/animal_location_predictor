@@ -9,9 +9,9 @@ if __name__ == '__main__':
 
     # parse arguments from run profile
     parser = ArgumentParser()
-    parser.add_argument('--study_id', required=False)
-    parser.add_argument('--individual_id', required=False)
-    parser.add_argument('--sensor_id', required=False)
+    parser.add_argument('--study-id', required=False)
+    parser.add_argument('--individual-id', required=False)
+    parser.add_argument('--sensor-id', required=False)
     args = parser.parse_args()
 
     # set out path
@@ -26,13 +26,13 @@ if __name__ == '__main__':
 
     print('getting joined data...')
 
-    joined_data = pd.read_csv(os.path.join(out_path,'_joined_data.csv'))
+    # joined_data = pd.read_csv(os.path.join(out_path,'_joined_data.csv'))
 
-    temp = joined_data.sort_values('number_of_events', ascending=False).loc[0,['study_id', 'individual_id']]
+    # temp = joined_data.sort_values('number_of_events', ascending=False).loc[0,['study_id', 'individual_id']]
 
-    study_id = 8019591 if not args.study_id else args.study_id
-    individual_id = 54137415 if not args.individual_id else args.individual_id
-    sensor_id = 653 if not args.sensor_id else args.sensor_id
+    study_id        = args.study_id
+    individual_id   = args.individual_id
+    sensor_id       = args.sensor_id
 
     # EVENTS
 
