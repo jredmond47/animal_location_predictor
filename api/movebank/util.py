@@ -27,7 +27,7 @@ class movebankAPI():
 
         response = requests.get('https://www.movebank.org/movebank/service/direct-read'
                                 , params=params
-                                , auth=(os.environ['mbus'], os.environ['mbpw']))
+                                , auth=('branpham', 'MBpassword1'))
 
         # print("Request " + response.url)
         if response.status_code == 200:  # successful request
