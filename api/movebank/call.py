@@ -61,7 +61,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # set out path
-    out_path = os.path.join('../data', 'movebank')
+    out_path = os.path.join('data', 'movebank')
 
     # delete existing files if appropriate
     if args.delete_files and os.path.exists(out_path):
