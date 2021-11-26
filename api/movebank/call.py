@@ -58,7 +58,6 @@ if __name__ == '__main__':
     # parse arguments from run profile
     parser = ArgumentParser()
     parser.add_argument('--delete-files', default=False, action='store_true')
-    parser.add_argument('--get-events', default=False, action='store_true')
     args = parser.parse_args()
 
     # set out path
