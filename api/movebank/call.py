@@ -121,18 +121,3 @@ if __name__ == '__main__':
     print(f'\t\tgot {len(gps_individuals)} gps_individuals - {len(gps_individuals_empty)} were empty')
     [gmbd.write_to_csv(individual, file_name, out_path) for individual in gps_individuals]
     [gmbd.write_to_csv(individual, f'empty_{file_name}', out_path) for individual in gps_individuals_empty]
-
-    # EVENTS
-    if args.get_events:
-        file_name = 'gps_events.csv'
-        print(f'\t{file_name}')
-        gps_sensor_id = 653
-        ids = []
-        for individual in gps_individuals:
-            temp = [(i['study_id'], i['individual_id'], gps_sensor_id) for i in individual]
-            ids.extend(temp)
-        gps_events_temp = gmbd.mulitprocess_api_call(func=mbapi.getIndividualEvents, values=ids)
-        gps_events = [response for response in gps_events_temp if response]
-        empty_count = len(gps_events_temp) - len(gps_events)
-        print(f'\t\tgot {len(gps_events)} gps_events - {empty_count} were empty')
-        [gmbd.write_to_csv(event, file_name, out_path) for event in gps_events]
